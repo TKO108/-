@@ -12,6 +12,7 @@
     <!-- アプリアイコン設定（同じフォルダに icon.png として保存） -->
     <link rel="icon" type="image/png" href="icon.png">
     <link rel="apple-touch-icon" href="icon.png">
+    <link rel="manifest" href="manifest.json">
 
     <title>Liquid Focus - 作業時間可視化アプリ</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -38,6 +39,11 @@
                     <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
                     <span id="pill-text">計測中 00:00</span>
                 </div>
+
+                <!-- ウィジェット手動同期ボタン -->
+                <button id="sync-widget-btn" onclick="syncToShortcuts(true)" title="ウィジェットへ同期" class="p-2 rounded-full theme-btn transition active:scale-95">
+                    <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                </button>
 
                 <!-- テーマ切り替えボタン -->
                 <button id="theme-toggle-btn" onclick="toggleTheme()" title="テーマ切り替え" class="p-2 rounded-full theme-btn transition active:scale-95">

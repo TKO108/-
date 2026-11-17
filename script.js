@@ -113,6 +113,33 @@ function saveState() {
     }
 }
 
+// ==================== iPhone / iPad ショートカット＆ウィジェット連携 ====================
+function syncToShortcuts(isManual = false) {
+    const runningSpace = appState.spaces.find(s => s.id === appState.timer.spaceId);
+    const payload = {
+        target: appState.widgetTarget,
+        theme: appState.theme,
+        isRunning: appState.timer.isRunning,
+        runningSpaceName: runningSpace ? runningSpace.name : '',
+        startTime: appState.timer.startTime,
+        spaces: appState.spaces.map(s => ({
+            id: s.id,
+            name: s.name,
+            idealHours: s.idealHours,
+            color: s.color,
+            savedHours: s.history[TODAY_KEY] || 0
+        }))
+    };
+
+    const jsonStr = JSON.stringify(payload);
+    const shortcutUrl = `shortcuts://run-shortcut?name=${encodeURIComponent('LiquidFocusSync')}&input=text&text=${encodeURIComponent(jsonStr)}`;
+
+    if (isManual) {
+        showToast('ショートカットへデータを送信します...');
+    }
+    window.location.href = shortcutUrl;
+}
+
 let appState = loadState();
 let timerInterval = null;
 let ambientDripInterval = null;
@@ -607,11 +634,11 @@ function toggleTimer() {
     if (!targetId) return;
 
     if (appState.timer.isRunning && appState.timer.spaceId !== targetId) {
-        stopAndSaveTimer();
+        stopAndSaveTimer(false);
     }
 
     if (appState.timer.isRunning && appState.timer.spaceId === targetId) {
-        stopAndSaveTimer();
+        stopAndSaveTimer(true);
         showToast('作業時間を記録しました！');
     } else {
         appState.timer = {
@@ -628,12 +655,13 @@ function toggleTimer() {
             const pct = Math.min(100, (getTodayHours(space) / space.idealHours) * 100);
             spawnDroplet(tank, space.color, pct);
         }
+        setTimeout(() => syncToShortcuts(false), 400);
     }
     renderSpaceDetail();
     updateHeaderPill();
 }
 
-function stopAndSaveTimer() {
+function stopAndSaveTimer(shouldSync = true) {
     if (!appState.timer.isRunning || !appState.timer.spaceId) return;
     const space = appState.spaces.find(s => s.id === appState.timer.spaceId);
     if (space) {
@@ -644,6 +672,9 @@ function stopAndSaveTimer() {
     saveState();
     stopTicker();
     updateHeaderPill();
+    if (shouldSync) {
+        setTimeout(() => syncToShortcuts(false), 300);
+    }
 }
 
 function startTicker() {
@@ -694,6 +725,7 @@ function addMockMinutes(mins) {
         saveState();
         renderSpaceDetail();
         showToast(`+${mins}分 蓄積しました！`);
+        syncToShortcuts(false);
     }, 650);
 }
 
@@ -746,6 +778,7 @@ function createSpace() {
     closeModal('modal-create');
     renderHome();
     showToast(`「${nameInput}」を作成しました`);
+    syncToShortcuts(false);
 }
 
 function saveSpaceSettings() {
@@ -769,11 +802,12 @@ function saveSpaceSettings() {
     document.getElementById('header-title').textContent = name;
     renderSpaceDetail();
     showToast('設定を保存しました');
+    syncToShortcuts(false);
 }
 
 function deleteCurrentSpace() {
     if (appState.timer.spaceId === appState.activeSpaceId) {
-        stopAndSaveTimer();
+        stopAndSaveTimer(false);
     }
     appState.spaces = appState.spaces.filter(s => s.id !== appState.activeSpaceId);
     if (appState.widgetTarget === appState.activeSpaceId) {
@@ -782,6 +816,7 @@ function deleteCurrentSpace() {
     saveState();
     showToast('スペースを削除しました');
     navigateTo('home');
+    syncToShortcuts(false);
 }
 
 // ==================== ウィジェット設定 ====================
@@ -826,6 +861,7 @@ function selectWidgetTarget(targetId) {
     closeModal('modal-widget');
     renderWidgetPreview();
     showToast('ウィジェット表示を更新しました');
+    syncToShortcuts(false);
 }
 
 document.addEventListener('visibilitychange', () => {
